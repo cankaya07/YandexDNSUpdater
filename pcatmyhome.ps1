@@ -57,6 +57,20 @@ $domain='example.com'
 $pddToken_='xxxxxxxxxxxxx' # you can get yandex token from https://pddimp.yandex.ru/api2/admin/get_token?domain_name=cankaya.net.tr
 
  
-Set-YandexDNSrecord -PddToken $pddToken_  -domain $domain -record_id 50393335 -subdomain $subdomain -ttl 3600 -content  $ip
- 
- 
+$DomainInfo = ConvertFrom-Json $(Get-YandexDNSrecord -PddToken $pddToken_  -domain $domain)
+
+foreach($obj in $DomainInfo.records)
+{
+    if( $obj.fqdn -eq $subdomain+'.'+$domain){
+    $OurDnsReord=$obj
+    Write-Host $OurDnsReord
+    }
+}
+
+#we already using free service of yandex. dont hurt their dns services :)
+if($OurDnsReord.content -ne $ip)
+{
+    Write-Host Lets change ip address of dns record
+    Write-Host $LastKnownIp "<>" $ip
+    Set-YandexDNSrecord -PddToken $pddToken_  -domain $domain -record_id $OurDnsReord.record_id -subdomain $subdomain -ttl 3600 -content  $ip
+}
